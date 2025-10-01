@@ -15,43 +15,39 @@ export const authOptions = NextAuth({
   secret: process.env.NEXTAUTH_SECRET, // important for production
 
   callbacks: {
-    // Runs on every sign-in
     async signIn({ user, account }) {
       if (account.provider === "github") {
         try {
-          await connectDb();
+          // Try connecting to DB, but don’t fail if it’s not available
+          await connectDb().catch(() => null);
 
-          // Ensure user exists in DB
-          const existingUser = await User.findOne({ email: user.email });
+          const existingUser = await User.findOne({ email: user.email }).catch(() => null);
           if (!existingUser) {
             await User.create({
               email: user.email,
               username: user.email.split("@")[0],
-            });
+            }).catch(() => null);
           }
-          return true;
         } catch (err) {
-          console.error("SignIn Error:", err);
-          return false; // stops login if DB fails
+          console.warn("Database not available, continuing without DB.");
         }
+        return true; // Always allow login even if DB fails
       }
       return true;
     },
 
-    // Modify session object before sending to client
     async session({ session }) {
       try {
-        await connectDb();
-        const dbUser = await User.findOne({ email: session.user.email });
+        await connectDb().catch(() => null);
+        const dbUser = await User.findOne({ email: session.user.email }).catch(() => null);
         if (dbUser) session.user.name = dbUser.username;
       } catch (err) {
-        console.error("Session Callback Error:", err);
+        console.warn("Database not available, sending session without DB info.");
       }
       return session;
     },
   },
 
-  // Optional: specify pages for sign in / error
   pages: {
     signIn: "/auth/signin",
     error: "/auth/error",
