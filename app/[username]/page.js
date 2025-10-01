@@ -28,6 +28,8 @@ export default Username
  
 export async function generateMetadata({ params }) {
   return {
-    title: `Support ${params.username} - Get Me A Chai`,
+    title: `Support ${params.username} - LaunchPad`,
+    description: `Join ${params.username}'s journey on LaunchPad. Support their ideas, projects, and passions with your contribution.`,
   }
 }
+

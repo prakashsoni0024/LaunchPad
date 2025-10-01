@@ -15,9 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Get Me A Chai - Funds for your Chai",
-  description: "This website is a crowdfunding platform for creaters.",
+  title: "LaunchPad - Startup Funding Platform",
+  description: "A crowdfunding platform for startups to raise funds and bring their ideas to life.",
 };
+
 
 export default function RootLayout({ children }) {
   return (
