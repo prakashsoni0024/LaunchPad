@@ -1,20 +1,19 @@
 import NextAuth from "next-auth";
 import GithubProvider from "next-auth/providers/github";
-import mongoose from "mongoose";
-import connectDb from '@/db/connectDb';
-import User from "@/models/User";
-import Payment from "@/models/Payment";
 
-export const authOptions = NextAuth({
-  // Configure one or more authentication providers
+export default NextAuth({
   providers: [
     GithubProvider({
       clientId: process.env.GITHUB_ID,
       clientSecret: process.env.GITHUB_SECRET,
     }),
-
-    // ...add more providers here
   ],
+  session: {
+    strategy: "jwt",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+});
+
 
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
