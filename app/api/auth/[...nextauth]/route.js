@@ -1,42 +1,58 @@
+// pages/api/auth/[...nextauth].js
 import NextAuth from "next-auth";
 import GithubProvider from "next-auth/providers/github";
+import connectDb from "@/db/connectDb";
+import User from "@/models/User";
 
-export default NextAuth({
+export const authOptions = NextAuth({
   providers: [
     GithubProvider({
       clientId: process.env.GITHUB_ID,
       clientSecret: process.env.GITHUB_SECRET,
     }),
   ],
-  session: {
-    strategy: "jwt",
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-});
 
+  secret: process.env.NEXTAUTH_SECRET, // important for production
 
   callbacks: {
-    async signIn({ user, account, profile, email, credentials }) {
-         if(account.provider == "github") { 
-          await connectDb()
-          // Check if the user already exists in the database
-          const currentUser =  await User.findOne({email: email}) 
-          if(!currentUser){
-            // Create a new user
-             const newUser = await User.create({
-              email: user.email, 
-              username: user.email.split("@")[0], 
-            })   
-          } 
-          return true
-         }
-      },
-      
-      async session({ session, user, token }) {
-        const dbUser = await User.findOne({email: session.user.email})
-        session.user.name = dbUser.username
-        return session
-      },
-    } 
-  })
+    async signIn({ user, account }) {
+      if (account.provider === "github") {
+        try {
+          // Try connecting to DB, but don’t fail if it’s not available
+          await connectDb().catch(() => null);
+
+          const existingUser = await User.findOne({ email: user.email }).catch(() => null);
+          if (!existingUser) {
+            await User.create({
+              email: user.email,
+              username: user.email.split("@")[0],
+            }).catch(() => null);
+          }
+        } catch (err) {
+          console.warn("Database not available, continuing without DB.");
+        }
+        return true; // Always allow login even if DB fails
+      }
+      return true;
+    },
+
+    async session({ session }) {
+      try {
+        await connectDb().catch(() => null);
+        const dbUser = await User.findOne({ email: session.user.email }).catch(() => null);
+        if (dbUser) session.user.name = dbUser.username;
+      } catch (err) {
+        console.warn("Database not available, sending session without DB info.");
+      }
+      return session;
+    },
+  },
+
+  pages: {
+    signIn: "/auth/signin",
+    error: "/auth/error",
+  },
+});
+
 export { authOptions as GET, authOptions as POST };
+
