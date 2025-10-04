@@ -20,12 +20,14 @@ const PaymentPage = ({ username }) => {
   const [currentUser, setcurrentUser] = useState({});
   const [payments, setPayments] = useState([]);
   //   const { data: session } = useSession();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); // to get the paymentdone param
   const router = useRouter();
 
   useEffect(() => {
     getData();
   }, []);
+
+ 
 
   useEffect(() => {
     if (searchParams.get("paymentdone") == "true") {
